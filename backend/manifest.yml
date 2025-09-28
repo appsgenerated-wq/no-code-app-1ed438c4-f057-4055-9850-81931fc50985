@@ -1,0 +1,100 @@
+name: BankApp
+
+entities:
+  User:
+    authenticable: true
+    properties:
+      - name
+      - name: email
+        type: email
+      - name: role
+        type: choice
+        options:
+          values: [admin, client]
+        default: client
+    policies:
+      create:
+        - access: admin
+      read:
+        - access: restricted
+          allow: User
+          condition: self
+      update:
+        - access: restricted
+          allow: User
+          condition: self
+      delete:
+        - access: admin
+      signup:
+        - access: public
+
+  Account:
+    properties:
+      - name: accountNumber
+        type: string
+      - name: accountType
+        type: choice
+        options:
+          values: [Checking, Savings]
+        default: Checking
+      - name: balance
+        type: money
+        options:
+          currency: 'USD'
+    belongsTo:
+      - name: owner
+        entity: User
+    policies:
+      create:
+        - access: restricted
+          allow: User
+      read:
+        - access: restricted
+          allow: User
+          condition: self
+      update:
+        - access: restricted
+          allow: User
+          condition: self
+      delete:
+        - access: admin
+
+  Transaction:
+    properties:
+      - name: type
+        type: choice
+        options:
+          values: [Deposit, Withdrawal, Transfer]
+      - name: amount
+        type: money
+        options:
+          currency: 'USD'
+      - name: description
+        type: text
+      - name: transactionDate
+        type: timestamp
+        default: now
+    belongsTo:
+      - name: account
+        entity: Account
+    policies:
+      create:
+        - access: restricted
+          allow: User
+      read:
+        - access: restricted
+          allow: User
+          condition: self # This condition applies to the owner of the related Account
+      update:
+        - access: forbidden
+      delete:
+        - access: admin
+
+
+# Health check endpoint for connection testing
+endpoints:
+  health:
+    path: /api/health
+    method: GET
+    policies: []
+    handler: healthCheck
